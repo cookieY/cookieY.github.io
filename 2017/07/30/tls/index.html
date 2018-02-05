@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="Cookie.Ye, im@supermancookie.com"><title>关于TLS经验小结(上) · 梦想树上的死耗子</title><meta name="description" content="1.什么是tls？安全传输层协议（Transport Layer Security）用于在两个通信应用程序之间提供保密性和数据完整性。TLS是SSL的标准化后的产物，有有1.0 1.1 1.2 1.3四个版本，目前最常用的是tls1.2协议。
+1.tls的一些概念1.1 算法种类
+非对称加密: RS"><meta name="keywords" content="Python Javascript Golang Linux"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="short icon" href="/images/favicon.png" type="image/x-icon"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"></head><body><div class="sidebar animated fadeInDown"><div class="logo-title"><div class="title"><img src="/images/logo@2x.png" style="width:127px;"><h3 title=""><a href="/">梦想树上的死耗子</a></h3><div class="description"><p>Python Javascript Golang Linux</p></div></div></div><ul class="social-links"><li><a href="http://github.com/cookieY"><i class="fa fa-github"></i></a></li></ul><div class="footer"><a target="_blank" href="/"><span>Theme by </span></a><a href="https://www.caicai.me"> CaiCai </a><span>&</span><a href="https://github.com/Ben02/hexo-theme-Anatole"> Ben</a><div class="by_farbox"><a href="https://hexo.io/zh-cn/" target="_blank">Proudly published with Hexo&#65281;</a></div></div></div><div class="main"><div class="page-top animated fadeInDown"><div class="nav"><li><a href="/">首页</a></li><li><a href="/about">关于</a></li><li><a href="/archives">分类</a></li><li></li></div><div class="information"><div class="back_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li></div><div class="avatar"><img src="http://oy0f4k5qi.bkt.clouddn.com/32.jpg"></div></div></div><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>关于TLS经验小结(上)</a></h3></div><div class="post-content"><h2 id="1-什么是tls？"><a href="#1-什么是tls？" class="headerlink" title="1.什么是tls？"></a>1.什么是tls？</h2><p>安全传输层协议（Transport Layer Security）用于在两个通信应用程序之间提供保密性和数据完整性。TLS是SSL的标准化后的产物，有有1.0 1.1 1.2 1.3四个版本，目前最常用的是tls1.2协议。</p>
+<h2 id="1-tls的一些概念"><a href="#1-tls的一些概念" class="headerlink" title="1.tls的一些概念"></a>1.tls的一些概念</h2><h4 id="1-1-算法种类"><a href="#1-1-算法种类" class="headerlink" title="1.1 算法种类"></a>1.1 算法种类</h4><ul>
+<li>非对称加密: RSA   DH     </li>
+<li>对称加密: AES  DES</li>
+<li>Hash算法(散列): md5   sha1  sha256</li>
+<li>PKI:数字签名</li>
+</ul>
+<h4 id="1-2-tls协议里面的算法的概念"><a href="#1-2-tls协议里面的算法的概念" class="headerlink" title="1.2 tls协议里面的算法的概念"></a>1.2 tls协议里面的算法的概念</h4><ul>
+<li>密钥交换算法(Kx)</li>
+<li>认证算法(Au)</li>
+<li>加密算法(Enc)</li>
+<li>消息摘要算法(Mac)</li>
+</ul>
+<hr>
+<p>说了这么多，估计大家也有点懵逼了。大家肯定也有一个疑问，上述介绍的这些到底有什么用呢？ </p>
+<p>ok 先上个图：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/7208541-2cf78ca24383cddc?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>这张图描述的是SSL通过RSA非对称加密方式的握手流程：</p>
+<p>1.1 ssl握手过程:</p>
+<p>1.客户端(一般为浏览器)向服务器发起send hello 其中的内容为:</p>
+<p>1.1协议版本号（支持的tls版本）<br>1.2客户端生成的随机数（Client random）<br>1.3以及客户端支持的对称加密方法集。</p>
+<p>2.服务端根据客户端send hello请求内容返回本次通信的tls版本，<br>具体使用哪一种对称加密方法,服务器生成的随机数（Server random）<br>以及服务器的证书及证书链。</p>
+<p>3.客户端采用对应CA的公钥(认证算法)检查该证书是否有效、有没有<br>过期。如果证书没有问题。就再生成一个新随机数(Premaster secret)。<br>并且用服务端给的证书公钥加密这个随机数发送给服务器。</p>
+<p>4.服务器用证书秘钥解密客户端发来的加密随机数(Premaster secret)。根据刚才双方协商的对称加密算法，使用之前的三个随机数去生成一个对话秘<br>钥，接下来的所有通信加解密都使用这个对话秘钥进行。</p>
+<p>1.2 为什么要用非对称加密？</p>
+<p>在进行ssl握手时（此时只是建立连接并没有开始传输数据）一切的握手传输数据都是明文的。<br>而我们在握手成功后最终需要用来对数据进行加解密的是对称加密方法。对称加密方法的好处<br>是，体积小，效率高。缺点也是显而易见，通信的暗号或密码绝对不能被他人知道。但是ssl<br>握手时是明文。所以为了不暴露对称加密的暗号或密码我们需要用非对称加密的方式保护起来。</p>
+<p>1.3 这样的握手机制真的很安全吗？</p>
+<p>刚才的RSA握手机制我们注意到以下几点:</p>
+<p>1.一共生成了3次随机数</p>
+<p>2.服务器需要将自己的证书公钥发送给客户端已便客户端生成Premaster secret</p>
+<p>那么问题来了？</p>
+<p>如果在你(客户端)与服务器中间有一个每天都没事情做，和你怼上了就一直监控收集你和<br>服务端之间的通信数据的中间人。然后某一天服务器的私钥不小心泄露了，又刚好秘钥被<br>这个中间人获得了，因为握手时数据为明文而且为了客户端生成Premaster secret 服<br>务端发送了公钥，所以中间人很容易得到公钥。最后不幸的事情发生了，中间人有公钥也<br>有秘钥。虽然服务器马上更换了证书。但是之前的数据，中间人全部都可以解密而获得到。</p>
+<p>那有什么办法可以规避？</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/7208541-36aee1b257bdc2ef?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image"></p>
+<p>上图是基于DH算法的SSL握手流程</p>
+<p>DH和RSA有什么区别吗？</p>
+<p>其他的步骤基本一致，只有一点。</p>
+<p>RSA采用的是服务器发送证书公钥，客户端公钥加密随机数再传输给服务端解密最后<br>生成session key</p>
+<p>而DH采用的是服务端发送算法的相应算法加解密参数，客户端也发送算法的相应参数。然后两边自己算自己的。最后对比，如果一致则建立session key，这样就算泄露了，由于在建立连接时并没有传输证书公钥所以不会对之前的数据产生被破解的风险。这就是PFS（Perfect Forward Secrecy）完美前向安全性。</p>
+</div><div class="post-footer"><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2017-07-30</span><i class="fa fa-tag"></i><a class="tag" href="/tags/网络安全/" title="网络安全">网络安全 </a></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="javascript:(function(){EN_CLIP_HOST='http://www.evernote.com';try{var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src=EN_CLIP_HOST+'/public/bookmarkClipper.js?'+(new%20Date().getTime()/100000);document.getElementsByTagName('head')[0].appendChild(x);}catch(e){location.href=EN_CLIP_HOST+'/clip.action?url='+encodeURIComponent(location.href)+'&amp;title='+encodeURIComponent(document.title);}})();" ref="nofollow" target="_blank"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" href="http://twitter.com/home?status=,https://devops.me/2017/07/30/tls/,梦想树上的死耗子,关于TLS经验小结(上),;"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2017/07/30/tls_3/" title="关于TLS经验小结(下)">Post Anterior</a></li></ul></div></div></div></div></div><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script></body></html>

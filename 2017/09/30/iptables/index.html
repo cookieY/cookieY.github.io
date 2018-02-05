@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="Cookie.Ye, im@supermancookie.com"><title>关于iptables的常用技巧方法 · 梦想树上的死耗子</title><meta name="description" content="前序iptables的起源发展防火墙的工作原理等这里我们就不在复述。这里主要记录下日常运维过程中关于iptables的命令,参数及实际运用。
+链路管理命令 iptables -F      清除预设表filter中的所有规则链的规则
+ iptables -X      清除预设表filter中使用者"><meta name="keywords" content="Python Javascript Golang Linux"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="short icon" href="/images/favicon.png" type="image/x-icon"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"></head><body><div class="sidebar animated fadeInDown"><div class="logo-title"><div class="title"><img src="/images/logo@2x.png" style="width:127px;"><h3 title=""><a href="/">梦想树上的死耗子</a></h3><div class="description"><p>Python Javascript Golang Linux</p></div></div></div><ul class="social-links"><li><a href="http://github.com/cookieY"><i class="fa fa-github"></i></a></li></ul><div class="footer"><a target="_blank" href="/"><span>Theme by </span></a><a href="https://www.caicai.me"> CaiCai </a><span>&</span><a href="https://github.com/Ben02/hexo-theme-Anatole"> Ben</a><div class="by_farbox"><a href="https://hexo.io/zh-cn/" target="_blank">Proudly published with Hexo&#65281;</a></div></div></div><div class="main"><div class="page-top animated fadeInDown"><div class="nav"><li><a href="/">首页</a></li><li><a href="/about">关于</a></li><li><a href="/archives">分类</a></li><li></li></div><div class="information"><div class="back_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li></div><div class="avatar"><img src="http://oy0f4k5qi.bkt.clouddn.com/32.jpg"></div></div></div><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>关于iptables的常用技巧方法</a></h3></div><div class="post-content"><h1 id="前序"><a href="#前序" class="headerlink" title="前序"></a>前序</h1><p>iptables的起源发展防火墙的工作原理等这里我们就不在复述。这里主要记录下日常运维过程中关于iptables的命令,参数及实际运用。</p>
+<h1 id="链路管理命令"><a href="#链路管理命令" class="headerlink" title="链路管理命令"></a>链路管理命令</h1><p> iptables -F      清除预设表filter中的所有规则链的规则</p>
+<p> iptables -X      清除预设表filter中使用者自定链中的规则</p>
+<p> iptables -P :设置默认策略的</p>
+<p> iptables -Z：清空链，及链中默认规则的计数器</p>
+<p> iptables -N:NEW 支持用户新建一个链</p>
+<p> iptables -L -n 查看规则</p>
+<h1 id="链表规则管理命令"><a href="#链表规则管理命令" class="headerlink" title="链表规则管理命令"></a>链表规则管理命令</h1><p>-A：追加，在当前链的最后新增一个规则</p>
+<p>-I num : 插入，把当前规则插入为第几条。</p>
+<pre><code>-I 3 :插入为第三条
+</code></pre><p>-o 指定数据包传出的那个网络接口。经常与OUTPUT链配合</p>
+<p>-p 指定规则使用的协议</p>
+<pre><code>常用 tcp,udp,icmp,all
+</code></pre><p>-s 指定来源ip或者网络,可以整个段,可以单个ip</p>
+<pre><code>例如 192.168.31.0/24 192.168.31.2
+
+规则前加 ！表示取反 例如：
+
+iptables -A INPUT -i eth0 -p tcp --dport=80 -s 192.168.31.0/24 -j ACCEPT
+
+这表示允许192.168.31.0网段的机器通过eth0网卡访问本机80端口
+
+iptables -A INPUT -i eth0 -p tcp --dport=80 -s !192.168.31.0/24 -j ACCEPT
+
+这就表示不允许了 因为！取反
+</code></pre><p>-d 与-s类似功能</p>
+<p>-j 需要执行的动作</p>
+<pre><code>主要有ACCEPT,DROP,REJECT,REDIRECT
+</code></pre><p>-i 指定数据包进入的那个网卡。</p>
+<pre><code>如 eth0,lo 此参数一般配合INPUT链使用
+</code></pre><p>-m 指定使用的模块</p>
+<pre><code>例如: multiport(启用多端口扩展)
+
+      state(状态监测)
+
+      limit(限制)
+
+      mac(网卡物理地址)
+      .......
+</code></pre><p>-R num：Replays替换/修改第几条规则</p>
+<pre><code>格式：iptables -R 3 …………
+</code></pre><p>-D num：删除，明确指定删除第几条规则</p>
+<h1 id="设置预置规则"><a href="#设置预置规则" class="headerlink" title="设置预置规则"></a>设置预置规则</h1><p>-P 指定链策略</p>
+<p>-t 指定链表</p>
+<p>例如允许所有数据流出</p>
+<pre><code>iptables -P OUTPUT ACCEPT (不指定-t 默认为filter表)
+</code></pre><h1 id="–sport与–dport"><a href="#–sport与–dport" class="headerlink" title="–sport与–dport"></a>–sport与–dport</h1><p>–sport 限制来源的端口号<br>        tcp连接实际是两个端口建立连接。<br>        所以来源端口号就是别人访问你这个服务时他的端口号</p>
+<p>–dport 恰恰相反.也就是你服务的端口号。所以我们基本使用的都是dport</p>
+<h1 id="状态检测"><a href="#状态检测" class="headerlink" title="状态检测"></a>状态检测</h1><p>-m state –state &lt;状态&gt;<br>有数种状态，状态有：</p>
+<ul>
+<li>INVALID：无效的封包，例如数据破损的封包状态</li>
+<li>ESTABLISHED：已经联机成功的联机状态；</li>
+<li>NEW：想要新建立联机的封包状态；</li>
+<li>RELATED：表示这个封包是与我们主机发送出去的封包有关， 可能是响应封包或者是联机成功之后的传送封包！这个状态很常被设定，因为设定了他之后，只要未来由本机发送出去的封包，即使我们没有设定封包的 INPUT 规则，该有关的封包还是可以进入我们主机， 可以简化相当多的设定规则。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT</span><br><span class="line"></span><br><span class="line">iptables -P OUTPUT  ACCEPT</span><br><span class="line"></span><br><span class="line">iptables -A INPUT -i lo -j ACCEPT</span><br></pre></td></tr></table></figure>
+<p>一般当我们需要建立一些临时规则时 一般会在开头加上这3句</p>
+<p>这样的作用: </p>
+<p>不影响现有的传入数据。而且也不用担心开放了之前拒绝的端口</p>
+<p>不影响流出数据</p>
+<p>不影响本地Lo环路数据（访问本地127.0.0.1）</p>
+<p>常用的规则配置:</p>
+<p>允许192.168.31.0网段访问80端口</p>
+<pre><code>iptables -A INPUT -p tcp --dport 80 -s 192.168.31.0/24 -j ACCEPT
+</code></pre><p>不允许</p>
+<pre><code>iptables -A INPUT -p tcp --dport 80 -s !192.168.31.0/24 -j ACCEPT
+
+或
+
+iptables -A INPUT -p tcp --dport 80 -s 192.168.31.0/24 -j DROP
+</code></pre><p>只允许 mac地址为aa:bb:cc:dd:ee:ff 的机器访问本地ssh端口</p>
+<pre><code>iptables -A INPUT -m mac --mac-source aa:bb:cc:dd:ee:ff -p tcp --dport 22 -j ACCEPT
+</code></pre><p>将80端口重定向到8080端口</p>
+<pre><code>iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
+</code></pre><p>443端口限流,每秒最多150个连接（防ddos）</p>
+<pre><code>iptables -A INPUT -i eth0 -p tcp --dport 443  -m limit --limit 150/s  --limit-burst 150 -j ACCEPT
+</code></pre><p>防SYN_FLOOD</p>
+<pre><code>iptables -N syn-flood   （新建一条链）
+
+iptables -A INPUT -p tcp --syn -j syn-flood 
+
+iptables -A syn-flood  -p tcp -m limit --limit 2/s --limit-burst 50 -j RETURN
+
+iptables -A syn-flood -j DROP
+</code></pre><p>单个ip最大并发数50</p>
+<pre><code>iptables -I INPUT -p tcp --dport 80 -m connlimit  --connlimit-above 50 -j REJECT
+</code></pre><p>对访问本机的22端口进行限制，每个ip每小时只能连接5次，超过的拒接，1小时候重新计算次数</p>
+<pre><code>iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --name SSHPOOL --rcheck --seconds 3600 --hitcount 5 -j DROP
+
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --name SSHPOOL --set -j ACCEPT
+
+（上面recent规则只适用于默认规则为DROP中，如果要适用默认ACCEPT的规则，需要--set放前面 并且无-j ACCEPT）
+</code></pre><p>预防cc攻击</p>
+<pre><code>tcpdump -tnn dst port 80 -c 100 | awk -F&quot;.&quot; &apos;{print $1&quot;.&quot;$2&quot;.&quot;$3&quot;.&quot;$4}&apos; | sort | uniq -c | sort -n -r |head -20
+
+查找发包最多的ip
+
+iptables -I INPUT -s ip -j REJECT 
+
+封掉
+</code></pre></div><div class="post-footer"><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2017-09-30</span><i class="fa fa-tag"></i><a class="tag" href="/tags/网络安全/" title="网络安全">网络安全 </a></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="javascript:(function(){EN_CLIP_HOST='http://www.evernote.com';try{var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src=EN_CLIP_HOST+'/public/bookmarkClipper.js?'+(new%20Date().getTime()/100000);document.getElementsByTagName('head')[0].appendChild(x);}catch(e){location.href=EN_CLIP_HOST+'/clip.action?url='+encodeURIComponent(location.href)+'&amp;title='+encodeURIComponent(document.title);}})();" ref="nofollow" target="_blank"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" href="http://twitter.com/home?status=,https://devops.me/2017/09/30/iptables/,梦想树上的死耗子,关于iptables的常用技巧方法,;"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2017/09/30/ceph/" title="ceph对象存储搭建">Post Anterior</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2017/09/30/sanic/" title="python高性能web框架Sanic学习--url">Próximo post</a></li></ul></div></div></div></div></div><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script></body></html>
